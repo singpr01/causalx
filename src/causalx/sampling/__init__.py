@@ -1,3 +1,4 @@
-from .sample_size import sample_size
+from .sample_size import mde, power, sample_size
 
-__all__ = ["sample_size"]
+__all__ = ["mde", "power", "sample_size"]
+

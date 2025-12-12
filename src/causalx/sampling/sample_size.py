@@ -98,6 +98,153 @@ def _sample_size_binary(
     return n_c, n_t
 
 
+def _power_continuous(
+    *,
+    n_control: int,
+    n_treatment: int,
+    sigma: float,
+    mean_diff: float,
+    alpha: float,
+    two_sided: bool,
+) -> float:
+    if n_control <= 0 or n_treatment <= 0:
+        raise ValueError("n_control and n_treatment must be > 0.")
+    if sigma <= 0:
+        raise ValueError("sigma must be > 0.")
+    if mean_diff == 0:
+        return 0.0
+
+    se = sigma * ((1.0 / n_treatment) + (1.0 / n_control)) ** 0.5
+    z_alpha, _ = _z_values(alpha, power=0.5, two_sided=two_sided)  # z_alpha only
+    z = abs(mean_diff) / se
+
+    if two_sided:
+        # Reject if |Z| > z_alpha, with Z ~ N(z, 1)
+        # Power = P(Z > z_alpha) + P(Z < -z_alpha)
+        return float(1.0 - norm.cdf(z_alpha - z) + norm.cdf(-z_alpha - z))
+
+    # one-sided (greater): reject if Z > z_alpha
+    return float(1.0 - norm.cdf(z_alpha - z))
+
+
+def _power_binary(
+    *,
+    n_control: int,
+    n_treatment: int,
+    baseline_rate: float,
+    mde: float,
+    alpha: float,
+    two_sided: bool,
+) -> float:
+    if n_control <= 0 or n_treatment <= 0:
+        raise ValueError("n_control and n_treatment must be > 0.")
+    p0 = baseline_rate
+    p1 = p0 + mde
+    if not (0.0 < p0 < 1.0) or not (0.0 < p1 < 1.0):
+        raise ValueError("baseline_rate and baseline_rate+mde must be in (0, 1).")
+
+    # Standard error under alternative
+    se = ((p1 * (1 - p1) / n_treatment) + (p0 * (1 - p0) / n_control)) ** 0.5
+    z_alpha, _ = _z_values(alpha, power=0.5, two_sided=two_sided)  # z_alpha only
+    z = abs(mde) / se
+
+    if two_sided:
+        return float(1.0 - norm.cdf(z_alpha - z) + norm.cdf(-z_alpha - z))
+
+    return float(1.0 - norm.cdf(z_alpha - z))
+
+
+
+def power(
+    *,
+    metric_type: MetricType,
+    n_control: int,
+    n_treatment: int,
+    alpha: float = 0.05,
+    two_sided: bool = True,
+    # binary:
+    baseline_rate: float | None = None,
+    mde: float | None = None,
+    # continuous:
+    sigma: float | None = None,
+    mean_diff: float | None = None,
+) -> float:
+    """Compute achieved power for a fixed sample size under a normal approximation."""
+    if metric_type == "binary":
+        if baseline_rate is None or mde is None:
+            raise ValueError("For metric_type='binary', baseline_rate and mde are required.")
+        return _power_binary(
+            n_control=n_control,
+            n_treatment=n_treatment,
+            baseline_rate=baseline_rate,
+            mde=mde,
+            alpha=alpha,
+            two_sided=two_sided,
+        )
+
+    if metric_type == "continuous":
+        if sigma is None or mean_diff is None:
+            raise ValueError("For metric_type='continuous', sigma and mean_diff are required.")
+        return _power_continuous(
+            n_control=n_control,
+            n_treatment=n_treatment,
+            sigma=sigma,
+            mean_diff=mean_diff,
+            alpha=alpha,
+            two_sided=two_sided,
+        )
+
+    raise ValueError(f"Unsupported metric_type '{metric_type}'. Use 'binary' or 'continuous'.")
+
+
+def mde(
+    *,
+    metric_type: MetricType,
+    n_control: int,
+    n_treatment: int,
+    alpha: float = 0.05,
+    power: float = 0.80,
+    two_sided: bool = True,
+    # binary:
+    baseline_rate: float | None = None,
+    # continuous:
+    sigma: float | None = None,
+) -> float:
+    """
+    Compute minimum detectable effect (MDE) for fixed sample size.
+    For binary metrics: returns absolute lift in probability.
+    For continuous metrics: returns difference in means.
+    """
+    if n_control <= 0 or n_treatment <= 0:
+        raise ValueError("n_control and n_treatment must be > 0.")
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must be in (0, 1).")
+    if not (0.0 < power < 1.0):
+        raise ValueError("power must be in (0, 1).")
+
+    z_alpha, z_power = _z_values(alpha, power, two_sided)
+
+    if metric_type == "continuous":
+        if sigma is None or sigma <= 0:
+            raise ValueError("For metric_type='continuous', sigma must be provided and > 0.")
+        se = sigma * ((1.0 / n_treatment) + (1.0 / n_control)) ** 0.5
+        return float((z_alpha + z_power) * se)
+
+    if metric_type == "binary":
+        if baseline_rate is None:
+            raise ValueError("For metric_type='binary', baseline_rate is required.")
+        p0 = baseline_rate
+        if not (0.0 < p0 < 1.0):
+            raise ValueError("baseline_rate must be in (0, 1).")
+
+        # Conservative-ish SE using p0 for both arms (common planning approximation)
+        se = ((p0 * (1 - p0) / n_treatment) + (p0 * (1 - p0) / n_control)) ** 0.5
+        return float((z_alpha + z_power) * se)
+
+    raise ValueError(f"Unsupported metric_type '{metric_type}'. Use 'binary' or 'continuous'.")
+
+
+
 def sample_size(
     *,
     metric_type: MetricType,

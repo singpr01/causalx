@@ -1,6 +1,6 @@
 import pytest
 
-from causalx.sampling import sample_size
+from causalx.sampling import mde, power, sample_size
 
 
 def test_binary_sample_size_runs_and_returns_ints():
@@ -52,5 +52,43 @@ def test_allocation_changes_split_not_total_significantly():
     assert res_b.n_treatment != res_a.n_treatment
     assert res_b.n_control != res_a.n_control
     assert res_b.n_total > 0
+
+
+
+
+def test_power_increases_with_more_n_continuous():
+    p_small = power(
+        metric_type="continuous",
+        n_control=200,
+        n_treatment=200,
+        sigma=1.0,
+        mean_diff=0.2,
+    )
+    p_big = power(
+        metric_type="continuous",
+        n_control=800,
+        n_treatment=800,
+        sigma=1.0,
+        mean_diff=0.2,
+    )
+    assert p_big > p_small
+
+
+def test_mde_decreases_with_more_n_continuous():
+    m_small = mde(
+        metric_type="continuous",
+        n_control=200,
+        n_treatment=200,
+        sigma=1.0,
+        power=0.8,
+    )
+    m_big = mde(
+        metric_type="continuous",
+        n_control=800,
+        n_treatment=800,
+        sigma=1.0,
+        power=0.8,
+    )
+    assert m_big < m_small
 
 
