@@ -29,3 +29,24 @@ class SampleSizeResult:
     method: str = "normal_approx"
     assumptions: dict[str, Any] | None = None
 
+
+@dataclass(frozen=True)
+class SimulatedPowerResult:
+    n: int
+    alpha: float
+    npower: int
+    ndistr: int
+    direction: str  # "greater" | "less" | "two-sided"
+
+    power: float
+    mc_se: float
+    n_reject: int
+
+    null_stat_summary: dict[str, float] | None = None
+    meta: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class EffectGridResult:
+    effects: list[dict[str, Any]]
+    results: list[SimulatedPowerResult]

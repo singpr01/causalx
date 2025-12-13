@@ -54,8 +54,6 @@ def test_allocation_changes_split_not_total_significantly():
     assert res_b.n_total > 0
 
 
-
-
 def test_power_increases_with_more_n_continuous():
     p_small = power(
         metric_type="continuous",
@@ -90,5 +88,3 @@ def test_mde_decreases_with_more_n_continuous():
         power=0.8,
     )
     assert m_big < m_small
-
-

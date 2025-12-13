@@ -154,7 +154,6 @@ def _power_binary(
     return float(1.0 - norm.cdf(z_alpha - z))
 
 
-
 def power(
     *,
     metric_type: MetricType,
@@ -244,7 +243,6 @@ def mde(
     raise ValueError(f"Unsupported metric_type '{metric_type}'. Use 'binary' or 'continuous'.")
 
 
-
 def sample_size(
     *,
     metric_type: MetricType,
@@ -259,7 +257,6 @@ def sample_size(
     sigma: float | None = None,
     mean_diff: float | None = None,
 ) -> SampleSizeResult:
-
     """
     Compute required sample size using a normal approximation.
 
