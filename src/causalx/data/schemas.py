@@ -50,3 +50,18 @@ class SimulatedPowerResult:
 class EffectGridResult:
     effects: list[dict[str, Any]]
     results: list[SimulatedPowerResult]
+
+
+@dataclass(frozen=True)
+class CausalEstimate:
+    estimand: str              # e.g. "ATE"
+    contrast: str              # e.g. "variant_a - control"
+    estimate: float
+    std_error: float
+    ci_low: float
+    ci_high: float
+    alpha: float
+    n: int
+    method: str               # e.g. "diff_in_means"
+    meta: dict[str, Any] | None = None
+
