@@ -94,4 +94,3 @@ def test_stratified_assignment_accepts_string_strata():
     )
     assert "treatment" in out.columns
     assert set(out["treatment"].unique()) <= {0, 1, 2}
-

@@ -9,6 +9,7 @@ from causalx.data.schemas import CausalEstimate
 # Helpers
 # -----------------------
 
+
 def simulate_continuous_data(
     n: int = 3000,
     effects: dict = None,
@@ -27,9 +28,7 @@ def simulate_continuous_data(
     arms = list(effects.keys())
     arm_assign = rng.choice(arms, size=n, replace=True)
 
-    y = np.array(
-        [effects[a] + rng.normal(0, 1.0) for a in arm_assign]
-    )
+    y = np.array([effects[a] + rng.normal(0, 1.0) for a in arm_assign])
 
     return pd.DataFrame(
         {
@@ -73,6 +72,7 @@ def simulate_binary_data(
 # -----------------------
 # diff_in_means tests
 # -----------------------
+
 
 def test_diff_in_means_returns_one_estimate_per_non_reference_arm():
     df = simulate_continuous_data()
@@ -118,6 +118,7 @@ def test_diff_in_means_handles_missing_values():
 # diff_in_proportions tests
 # -----------------------
 
+
 def test_diff_in_proportions_returns_correct_number_of_contrasts():
     df = simulate_binary_data()
     res = diff_in_proportions(df, outcome_col="y", treatment_col="arm", reference="control")
@@ -154,4 +155,3 @@ def test_diff_in_proportions_rejects_non_binary_outcome():
 
     with pytest.raises(ValueError):
         diff_in_proportions(df, outcome_col="y", treatment_col="arm")
-

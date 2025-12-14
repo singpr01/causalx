@@ -109,4 +109,3 @@ def assign_treatment_stratified(
         out.loc[idx, treatment_col] = assign
 
     return out
-

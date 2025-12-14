@@ -99,7 +99,9 @@ def diff_in_means(
     ns = grouped.count()
 
     if ns.loc[ref] < 2:
-        raise ValueError(f"Reference arm '{ref}' has too few non-missing outcomes (n={int(ns.loc[ref])}).")
+        raise ValueError(
+            f"Reference arm '{ref}' has too few non-missing outcomes (n={int(ns.loc[ref])})."
+        )
 
     results: list[CausalEstimate] = []
     ref_mean = float(means.loc[ref])
