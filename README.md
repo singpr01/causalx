@@ -1,39 +1,48 @@
 # causalx
 
-**causalx** is a lightweight, modular toolkit for causal inference and experimentation.
-It provides clean, reusable building blocks for common workflows such as
-sample size planning, treatment assignment, estimation, and diagnostics.
+**causalx** is a lightweight, modular Python toolkit for experimentation and causal inference.
 
-The project is designed to:
-- be **practitioner-oriented** (clear APIs, sensible defaults)
-- scale from **simple A/B tests to observational causal analysis**
-- grow from **open-source tooling into production-grade software**
+It provides clear, reusable building blocks for common workflows such as:
+- sample size planning and power analysis
+- randomized and stratified treatment assignment
+- covariate balance diagnostics
+- effect estimation for continuous and binary outcomes
 
-This repository is currently at **v0.1** and focuses on core primitives.
+The project emphasizes **clarity, correctness, and reproducibility**, with APIs designed to be easy to read and reason about.
 
-> ⚠️ **API stability note**  
-> `causalx` is under active development. APIs may change between minor versions
-> as the project evolves and stabilizes.
+This repository is currently at **v0.1** and focuses on core experimental primitives.
 
 ---
 
 ## Scope (v0.1)
 
-**Implemented / scaffolded**
-- Sample size and power calculations
-- Treatment assignment (randomized and stratified)
-- Core causal estimators
-- Balance and diagnostic utilities
-- Synthetic data generation for testing and examples
-- End-to-end example notebooks
+### Implemented
+- **Sampling & Power**
+  - Analytic sample size and power calculations
+  - Simulation-based power analysis for arbitrary estimators
+- **Assignment**
+  - Multi-arm random assignment
+  - Multi-arm stratified (blocked) assignment
+  - Reproducible assignment via seeded RNG
+- **Diagnostics**
+  - Standardized Mean Differences (SMD) for multi-arm balance checks
+- **Estimation**
+  - Difference in means (continuous outcomes)
+  - Difference in proportions (binary outcomes)
+  - Multi-arm contrasts vs a reference arm
+- **Testing & Examples**
+  - Unit tests for all core modules
+  - End-to-end example notebooks
 
-**Out of scope (for now)**
-- DAG editors or graphical identification tooling
+### Explicitly out of scope (for now)
+- Graphical causal modeling or DAG tooling
 - Advanced doubly-robust or ML-based estimators
-- Production integrations (databases, metrics systems)
-- Hosted or UI-based tooling
+- Clustered or hierarchical designs
+- Observational causal identification pipelines
+- Production system integrations
 
 ---
+
 
 ## Project structure
 
@@ -70,39 +79,31 @@ pip install -e ".[dev]"
 
 ---
 
-## Quick examples
+## Example workflows
 
 > The examples below illustrate intended usage. Function signatures may evolve
 > during v0.x development.
 
-### Sample size planning
+### Assignment and Balance
 
 ```python
-from causalx.sampling.sample_size import sample_size
+from causalx.assignment import assign_treatment, smd
 
-result = sample_size(
-    baseline_rate=0.10,
-    mde=0.02,
-    alpha=0.05,
-    power=0.80
-)
-
-print(result)
-```
-
----
-
-### Random assignment
-
-```python
-from causalx.assignment.random_assign import assign_treatment
-
-df_assigned = assign_treatment(
+df = assign_treatment(
     df,
-    treatment_col="treatment",
-    prob=0.5,
-    seed=42
+    arms=("control", "A", "B"),
+    probs=(0.5, 0.25, 0.25),
+    seed=42,
+    treatment_col="arm",
 )
+
+balance = smd(
+    df,
+    covariate_cols=["age", "prior_spend"],
+    treatment_col="arm",
+    reference="control",
+)
+
 ```
 
 ---
@@ -112,17 +113,33 @@ df_assigned = assign_treatment(
 ```python
 from causalx.analysis.estimators import diff_in_means
 
-estimate = diff_in_means(
-    df_assigned,
-    outcome_col="outcome",
-    treatment_col="treatment"
+estimates = diff_in_means(
+    df,
+    outcome_col="revenue",
+    treatment_col="arm",
+    reference="control",
 )
 
-print(estimate)
+for e in estimates:
+    print(e.contrast, e.estimate, (e.ci_low, e.ci_high))
+
 ```
+
+---
+
 
 See the `notebooks/` directory for complete, end-to-end workflows
 covering simulation, assignment, estimation, and diagnostics.
+
+The recommended way to explore the library is through the notebooks:
+
+* **01_sample_size.ipynb** — analytic sample size and power
+
+* **02_assignment.ipynb** — multi-arm and stratified assignment + balance
+
+* **03_estimation.ipynb** — effect estimation for continuous and binary outcomes
+
+* **04_simulated_power.ipynb** — simulation-based power analysis
 
 ---
 
@@ -140,24 +157,7 @@ covering simulation, assignment, estimation, and diagnostics.
 * **Research-to-code translation**
   Methods are implemented as faithful translations of standard or published approaches.
 
----
 
-## Roadmap (high level)
-
-* Regression adjustment and CUPED-style estimators
-* Overlap and sensitivity diagnostics
-* Doubly-robust estimators (AIPW / TMLE-lite)
-* Heterogeneous treatment effects (meta-learners)
-* Experiment and causal analysis report generation
-
----
-
-## Contributing
-
-Contributions and feedback are welcome.
-
-This project is early-stage and evolving; interfaces may change as
-core abstractions stabilize.
 
 ---
 
@@ -165,5 +165,5 @@ core abstractions stabilize.
 
 MIT License
 
-```
+
 
