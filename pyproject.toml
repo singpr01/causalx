@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "causalx"
 version = "0.1.0"
-description = "Causal inference + experimentation toolkit (sampling, assignment, estimation, diagnostics)."
+description = "Experimentation and Causal inference toolkit"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
 license = { file = "LICENSE" }
 authors = [{ name = "Pradeep Singh" }]
-keywords = ["causal-inference", "experimentation", "a-b-testing", "statistics"]
+keywords = ["experimentation", "causal-inference", "a-b-testing", "statistics"]
 dependencies = [
   "numpy>=1.26",
   "pandas>=2.1",
